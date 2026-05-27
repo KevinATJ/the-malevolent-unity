@@ -16,27 +16,30 @@ public class PickupCollectibleController : MonoBehaviour
     [Header("Events")]
     public GameEvent onPickupDone;
 
-    // Update is called once per frame
     void Update()
     {
         if (pickupActive)
         {
+            if (pickupItem == null)
+            {
+                pickupActive = false;
+                return;
+            }
+
             Vector3 directionToMove = targetPosition - pickupItem.transform.position;
-
             directionToMove = directionToMove.normalized * Time.deltaTime * pickupSpeed;
-
             float maxDistance = Vector3.Distance(pickupItem.transform.position, targetPosition);
-            if (pickupItem.transform.position != targetPosition) {
-                pickupItem.transform.position = pickupItem.transform.position + Vector3.ClampMagnitude(
-                    directionToMove, maxDistance
-                );
+
+            if (pickupItem.transform.position != targetPosition)
+            {
+                pickupItem.transform.position = pickupItem.transform.position + Vector3.ClampMagnitude(directionToMove, maxDistance);
             }
             else
             {
                 onPickupDone.Raise(pickupItem);
-                Destroy(pickupItem); // DEVVV
+                Destroy(pickupItem);
                 pickupActive = false;
-            }   
+            }
         }
     }
 
@@ -44,7 +47,7 @@ public class PickupCollectibleController : MonoBehaviour
     {
         if (!pickupActive)
         {
-            RaycastHit hit = (RaycastHit) data;
+            RaycastHit hit = (RaycastHit)data;
             pickupItem = hit.transform.gameObject;
             pickupItem.GetComponent<MeshCollider>().enabled = false;
             targetPosition = Camera.main.transform.position + Vector3.up * camHeightOffset;

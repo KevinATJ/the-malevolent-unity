@@ -11,6 +11,7 @@ public class InputManager : MonoBehaviour
     [SerializeField] PlayerCam mouseLook;
     [SerializeField] PauseMenu pauseMenu;
     [SerializeField] EscapeController escapeController;
+
     PlayerControls controls;
     PlayerControls.GroundMovementActions groundMovement;
     PlayerControls.InteractionActions interactions;
@@ -32,10 +33,7 @@ public class InputManager : MonoBehaviour
         UIActions = controls.UI;
 
         groundMovement.HorizontalMovement.performed += ctx => horizontalInput = ctx.ReadValue<Vector2>();
-
-
         groundMovement.Jump.performed += _ => movement.OnJumpPressed();
-
         groundMovement.MouseX.performed += ctx => mouseInput.x = ctx.ReadValue<float>();
         groundMovement.MouseY.performed += ctx => mouseInput.y = ctx.ReadValue<float>();
         groundMovement.Run.performed += _ => movement.OnRunPressed(true);
@@ -44,12 +42,25 @@ public class InputManager : MonoBehaviour
 
         interactions.ControlFlashlight.performed += _ => flashlighController.SetFlashlightState();
         interactions.PickupCollectibles.performed += _ => onTryPickupCollectible.Raise();
-        interactions.Escape.performed += _ => escapeController.trytoEscape();
+
+        interactions.Escape.performed += _ => {
+            if (escapeController != null) escapeController.trytoEscape();
+            else Debug.LogWarning("Falta asignar el EscapeController en el Inspector del InputManager.");
+        };
 
         UIActions.Pause.performed += _ => pauseMenu.SetActivePause();
         UIActions.JournalNext.performed += _ => onJournalNext.Raise();
         UIActions.JournalPrev.performed += _ => onJournalPrev.Raise();
+
+        UIActions.ToggleJournal.performed += _ =>
+        {
+            if (!pauseMenu.menuPaused)
+            {
+                onToggleJournal.Raise(!pauseMenu.journalPaused);
+            }
+        };
     }
+
     private void Update()
     {
         movement.ReceiveInput(horizontalInput);
@@ -80,10 +91,6 @@ public class InputManager : MonoBehaviour
         else
         {
             UIActions.ToggleJournal.Enable();
-            UIActions.ToggleJournal.performed += _ =>
-            {
-                onToggleJournal.Raise(!pauseMenu.journalPaused);
-            };
         }
     }
 
@@ -91,6 +98,7 @@ public class InputManager : MonoBehaviour
     {
         controls.Enable();
     }
+
     private void OnDestroy()
     {
         controls.Disable();

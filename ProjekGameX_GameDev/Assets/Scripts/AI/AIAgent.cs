@@ -30,6 +30,9 @@ public class AIAgent : MonoBehaviour
     public AudioClip horrorAmbiance;
     public AudioClip chaseBGM;
 
+    [Header("Animation")]
+    public Animator animator;
+
 
     // Start is called before the first frame update
     void Start()
@@ -49,6 +52,6 @@ public class AIAgent : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        stateMachine.Update();
+        //stateMachine.Update();
     }
 }
