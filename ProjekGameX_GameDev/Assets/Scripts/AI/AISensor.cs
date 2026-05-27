@@ -73,7 +73,7 @@ public class AISensor : MonoBehaviour
             if (distanciaAlObjeto <= radioVisionActual && IsInSight(obj))
             {
                 objectsList.Add(obj);
-                if (obj.CompareTag("PlayerHead"))
+                if (obj.CompareTag("Player") || obj.CompareTag("PlayerHead"))
                 {
                     vioAlJugador = true;
 
@@ -153,11 +153,11 @@ public class AISensor : MonoBehaviour
 
     public bool IsInSight(GameObject obj)
     {
-        Vector3 origin = transform.position;
+        Vector3 origin = transform.position + Vector3.up * (height / 2);
         Vector3 dest = obj.transform.position;
         Vector3 direction = dest - origin;
 
-        if (direction.y < 0 || direction.y > height)
+        if (direction.y < -height || direction.y > height)
         {
             return false;
         }
@@ -165,20 +165,52 @@ public class AISensor : MonoBehaviour
         direction.y = 0;
         float deltaAngle = Vector3.Angle(direction, transform.forward);
 
-        if (deltaAngle > angle)
+        float currentAngle = angle;
+        if (AIDirectorBlackboard.Instance != null && AIDirectorBlackboard.Instance.isFlashlightOn)
+        {
+            currentAngle *= 1.5f;
+        }
+
+        if (deltaAngle > currentAngle)
         {
             return false;
         }
 
-        origin.y += height / 2;
-        dest.y = origin.y;
+        CharacterController playerController = obj.GetComponent<CharacterController>();
+        PlayerMovement playerMovement = obj.GetComponent<PlayerMovement>();
 
-        if (Physics.Linecast(origin, dest, occlusionLayers))
+        float playerHeight = 1.8f;
+        float headHeight = 1.7f;
+
+        if (playerController != null)
         {
-            return false;
+            playerHeight = playerController.height;
         }
 
-        return true;
+        if (playerMovement != null && playerMovement.cameraHolder != null)
+        {
+            headHeight = playerMovement.cameraHolder.localPosition.y;
+        }
+
+        Vector3[] targetPoints = new Vector3[]
+        {
+            dest,
+            dest + (Vector3.up * (playerHeight * 0.5f)),
+            dest + (Vector3.up * headHeight)
+        };
+        bool canSeeAtLeastOnePoint = false;
+
+        foreach (Vector3 targetPoint in targetPoints)
+        {
+            if (!Physics.Linecast(origin, targetPoint, occlusionLayers))
+            {
+                canSeeAtLeastOnePoint = true;
+                Debug.DrawLine(origin, targetPoint, Color.magenta, 0.1f);
+                break;
+            }
+        }
+
+        return canSeeAtLeastOnePoint;
     }
 
     Mesh CreateWedgeMesh()
