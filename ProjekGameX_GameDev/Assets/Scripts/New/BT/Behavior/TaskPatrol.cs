@@ -25,13 +25,17 @@ namespace AI.BehaviorTree
 
         public override NodeState Evaluate()
         {
-            if (_ai.BGMSource.clip == _ai.chaseBGM)
+            // Control de Estado Lógico
+            if (AIDirectorBlackboard.Instance.currentGhostState != GhostState.Patrolling)
             {
+                AIDirectorBlackboard.Instance.currentGhostState = GhostState.Patrolling;
+
                 if (_ai.deadCollider != null) _ai.deadCollider.SetActive(false);
 
                 if (_ai.horrorAmbiance != null)
                 {
                     _ai.BGMSource.clip = _ai.horrorAmbiance;
+                    _ai.BGMSource.loop = true;
                     _ai.BGMSource.Play();
                 }
                 else
@@ -43,6 +47,9 @@ namespace AI.BehaviorTree
             bool hayRuidoFresco = AIDirectorBlackboard.Instance != null &&
                                   AIDirectorBlackboard.Instance.soundAge < AIDirectorBlackboard.Instance.soundMaxAge;
 
+            float baseWalkSpeed = _ai.config != null ? _ai.config.walkSpeed : 3.5f;
+            float maxRunSpeed = _ai.config != null ? _ai.config.runSpeed : 8.5f;
+
             if (hayRuidoFresco)
             {
                 Vector3 destinoRuido = AIDirectorBlackboard.Instance.lastSoundPosition;
@@ -50,7 +57,7 @@ namespace AI.BehaviorTree
                 if (!_investigatingNoise)
                 {
                     _ai.navMeshAgent.isStopped = false;
-                    _ai.navMeshAgent.speed = 4.5f;
+                    _ai.navMeshAgent.speed = maxRunSpeed;
                     _ai.navMeshAgent.SetDestination(destinoRuido);
                     _investigatingNoise = true;
                     _isPatrolling = false;
@@ -76,17 +83,23 @@ namespace AI.BehaviorTree
                     if (_playerTransform != null)
                     {
                         float radioMaximoActual = _radioMaximoBase;
+                        float multiplicadorVelocidad = 1.0f;
 
-                        if (AIDirectorBlackboard.Instance != null && AIDirectorBlackboard.Instance.isDirectorActive)
+                        if (AIDirectorBlackboard.Instance != null)
                         {
-                            float tension = AIDirectorBlackboard.Instance.tensionLevel;
-                            radioMaximoActual = Mathf.Lerp(10f, _radioMaximoBase, tension / 100f);
+                            if (AIDirectorBlackboard.Instance.isDirectorActive)
+                            {
+                                float tension = AIDirectorBlackboard.Instance.tensionLevel;
+                                radioMaximoActual = Mathf.Lerp(10f, _radioMaximoBase, tension / 100f);
+                            }
+
+                            multiplicadorVelocidad = AIDirectorBlackboard.Instance.GetDistanceSpeedMultiplier();
                         }
 
                         Vector3 nuevoDestino = ObtenerPuntoEnCascaron(_playerTransform.position, _radioMinimo, radioMaximoActual);
 
                         _ai.navMeshAgent.isStopped = false;
-                        _ai.navMeshAgent.speed = 3.5f;
+                        _ai.navMeshAgent.speed = baseWalkSpeed * multiplicadorVelocidad;
                         _ai.navMeshAgent.SetDestination(nuevoDestino);
 
                         _isPatrolling = true;

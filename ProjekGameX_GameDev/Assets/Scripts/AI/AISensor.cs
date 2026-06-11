@@ -6,8 +6,10 @@ using UnityEngine.AI;
 [ExecuteInEditMode]
 public class AISensor : MonoBehaviour
 {
-    public float distance = 10f;
-    public float angle = 30f;
+    public float focalDistance = 15f;
+    public float focalAngle = 15f;
+    public float peripheralDistance = 5f;
+    public float peripheralAngle = 45f;
     public float height = 1.0f;
     public Color meshColor = Color.red;
     public int scanFrequency = 30;
@@ -48,12 +50,12 @@ public class AISensor : MonoBehaviour
     private void Scan()
     {
         float radioDeEscucha = AIDirectorBlackboard.Instance != null ? AIDirectorBlackboard.Instance.noiseRadius : 0f;
-        float radioVisionActual = distance;
+        float radioVisionActual = focalDistance;
 
         if (AIDirectorBlackboard.Instance != null &&
            (AIDirectorBlackboard.Instance.ghostSeesPlayer || AIDirectorBlackboard.Instance.soundAge < 3f))
         {
-            radioVisionActual = distance * 2f;
+            radioVisionActual = focalDistance * 1.5f;
             radioDeEscucha *= 2f;
         }
 
@@ -70,7 +72,7 @@ public class AISensor : MonoBehaviour
             GameObject obj = colliders[i].gameObject;
             float distanciaAlObjeto = Vector3.Distance(transform.position, obj.transform.position);
 
-            if (distanciaAlObjeto <= radioVisionActual && IsInSight(obj))
+            if (distanciaAlObjeto <= radioVisionActual && IsInSight(obj, distanciaAlObjeto))
             {
                 objectsList.Add(obj);
                 if (obj.CompareTag("Player") || obj.CompareTag("PlayerHead"))
@@ -121,7 +123,6 @@ public class AISensor : MonoBehaviour
         {
             if (distanciaLineal <= radioRuidoJugador)
             {
-                Debug.DrawLine(oidoFantasma, ruidoJugador, Color.green, 0.5f);
                 return true;
             }
             return false;
@@ -135,10 +136,8 @@ public class AISensor : MonoBehaviour
             for (int i = 1; i < path.corners.Length; i++)
             {
                 distanciaPorPasillos += Vector3.Distance(path.corners[i - 1], path.corners[i]);
-                Debug.DrawLine(path.corners[i - 1] + Vector3.up, path.corners[i] + Vector3.up, Color.yellow, 0.5f);
             }
 
-            // Atenuación del 20% por rebotar en las paredes
             float distanciaAtenuada = distanciaPorPasillos * 1.2f;
 
             if (distanciaAtenuada <= radioRuidoJugador)
@@ -147,11 +146,10 @@ public class AISensor : MonoBehaviour
             }
         }
 
-        Debug.DrawLine(oidoFantasma, ruidoJugador, Color.red, 0.5f);
         return false;
     }
 
-    public bool IsInSight(GameObject obj)
+    public bool IsInSight(GameObject obj, float distanciaAlObjeto)
     {
         Vector3 origin = transform.position + Vector3.up * (height / 2);
         Vector3 dest = obj.transform.position;
@@ -165,13 +163,31 @@ public class AISensor : MonoBehaviour
         direction.y = 0;
         float deltaAngle = Vector3.Angle(direction, transform.forward);
 
-        float currentAngle = angle;
+        float currentFocalAngle = focalAngle;
+        float currentPeripheralAngle = peripheralAngle;
+
         if (AIDirectorBlackboard.Instance != null && AIDirectorBlackboard.Instance.isFlashlightOn)
         {
-            currentAngle *= 1.5f;
+            currentFocalAngle *= 1.5f;
+            currentPeripheralAngle *= 1.5f;
         }
 
-        if (deltaAngle > currentAngle)
+        float maxAllowedDistance = 0f;
+
+        if (deltaAngle <= currentFocalAngle)
+        {
+            maxAllowedDistance = focalDistance;
+        }
+        else if (deltaAngle <= currentPeripheralAngle)
+        {
+            maxAllowedDistance = peripheralDistance;
+        }
+        else
+        {
+            return false;
+        }
+
+        if (distanciaAlObjeto > maxAllowedDistance)
         {
             return false;
         }
@@ -198,19 +214,16 @@ public class AISensor : MonoBehaviour
             dest + (Vector3.up * (playerHeight * 0.5f)),
             dest + (Vector3.up * headHeight)
         };
-        bool canSeeAtLeastOnePoint = false;
 
         foreach (Vector3 targetPoint in targetPoints)
         {
             if (!Physics.Linecast(origin, targetPoint, occlusionLayers))
             {
-                canSeeAtLeastOnePoint = true;
-                Debug.DrawLine(origin, targetPoint, Color.magenta, 0.1f);
-                break;
+                return true;
             }
         }
 
-        return canSeeAtLeastOnePoint;
+        return false;
     }
 
     Mesh CreateWedgeMesh()
@@ -223,8 +236,8 @@ public class AISensor : MonoBehaviour
         int[] triangles = new int[numVertices];
 
         Vector3 bottomCenter = Vector3.zero;
-        Vector3 bottomLeft = Quaternion.Euler(0, -angle, 0) * Vector3.forward * distance;
-        Vector3 bottomRight = Quaternion.Euler(0, angle, 0) * Vector3.forward * distance;
+        Vector3 bottomLeft = Quaternion.Euler(0, -peripheralAngle, 0) * Vector3.forward * focalDistance;
+        Vector3 bottomRight = Quaternion.Euler(0, peripheralAngle, 0) * Vector3.forward * focalDistance;
         Vector3 topCenter = bottomCenter + Vector3.up * height;
         Vector3 topLeft = bottomLeft + Vector3.up * height;
         Vector3 topRight = bottomRight + Vector3.up * height;
@@ -235,13 +248,13 @@ public class AISensor : MonoBehaviour
         vertices[vert++] = bottomCenter; vertices[vert++] = topCenter; vertices[vert++] = topRight;
         vertices[vert++] = topRight; vertices[vert++] = bottomRight; vertices[vert++] = bottomCenter;
 
-        float currentAngle = -angle;
-        float deltaAngle = (angle * 2) / segments;
+        float currentAngle = -peripheralAngle;
+        float deltaAngle = (peripheralAngle * 2) / segments;
 
         for (int i = 0; i < segments; i++)
         {
-            bottomLeft = Quaternion.Euler(0, currentAngle, 0) * Vector3.forward * distance;
-            bottomRight = Quaternion.Euler(0, currentAngle + deltaAngle, 0) * Vector3.forward * distance;
+            bottomLeft = Quaternion.Euler(0, currentAngle, 0) * Vector3.forward * focalDistance;
+            bottomRight = Quaternion.Euler(0, currentAngle + deltaAngle, 0) * Vector3.forward * focalDistance;
             topLeft = bottomLeft + Vector3.up * height;
             topRight = bottomRight + Vector3.up * height;
 
@@ -272,11 +285,6 @@ public class AISensor : MonoBehaviour
         {
             Gizmos.color = meshColor;
             Gizmos.DrawMesh(mesh, transform.position, transform.rotation);
-        }
-        Gizmos.color = Color.green;
-        foreach (var obj in objects)
-        {
-            Gizmos.DrawSphere(obj.transform.position, 0.2f);
         }
     }
 }

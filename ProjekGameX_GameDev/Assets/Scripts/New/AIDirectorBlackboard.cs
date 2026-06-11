@@ -1,16 +1,21 @@
 using UnityEngine;
 using TMPro;
 
+public enum GhostState { Patrolling, Chasing, Killing }
+
 public class AIDirectorBlackboard : MonoBehaviour
 {
     public static AIDirectorBlackboard Instance;
 
-    [Header("Scanning Settings")]
-    public float campTimerThreshold = 15f;
-
     [Header("Director Global Settings")]
     public bool isDirectorActive = true;
     public bool showDebugUI = true;
+
+    [Header("Ghost Logic State")]
+    public GhostState currentGhostState = GhostState.Patrolling;
+
+    [Header("Scanning Settings")]
+    public float campTimerThreshold = 15f;
 
     [Header("Player Sensors")]
     public float tensionLevel = 0f;
@@ -44,9 +49,19 @@ public class AIDirectorBlackboard : MonoBehaviour
     public int remainingObjectives = 0;
     public Vector3 currentPriorityZone;
 
+    [Header("Teleport Settings & Data")]
+    public int objectsPickedSinceLastTP = 0;
+    public int targetObjectsForNextTP = 2;
+
     [Header("Ghost Telemetry (Read Only)")]
     public float currentPatrolRadius = 25f;
     public Vector3 currentGhostDestination = Vector3.zero;
+
+    [HideInInspector] public string tpConditionLabel = "Condición";
+    [HideInInspector] public string tpConditionValue = "0/0";
+    [HideInInspector] public string tpDistanceStatus = "Esperando...";
+    [HideInInspector] public string tpLastEvent = "Ninguno";
+    [HideInInspector] public bool tpIsReadyToJump = false;
 
     [Header("Debug UI")]
     public TextMeshProUGUI debugTextPanel;
@@ -55,6 +70,13 @@ public class AIDirectorBlackboard : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+    }
+
+    private void Start()
+    {
+        targetObjectsForNextTP = Random.Range(1, 4);
+        isDirectorActive = (Random.value > 0.5f);
+        Debug.Log(">>> MODO A/B TESTING ASIGNADO AL AZAR: " + (isDirectorActive ? "DINÁMICO" : "ESTÁTICO"));
     }
 
     private void Update()
@@ -80,7 +102,6 @@ public class AIDirectorBlackboard : MonoBehaviour
         {
             targetTension = 100f;
         }
-
         else
         {
             float distanceFactor = Mathf.Clamp01(1.0f - (distanceToGhost / maxTensionDistance));
@@ -106,11 +127,24 @@ public class AIDirectorBlackboard : MonoBehaviour
         tensionLevel = Mathf.MoveTowards(tensionLevel, targetTension, changeSpeed * Time.deltaTime);
     }
 
+    public float GetDistanceSpeedMultiplier()
+    {
+        if (!isDirectorActive) return 1.0f;
+
+        float minDist = 20f;
+        float maxDist = 40f;
+        float maxMultiplier = 1.6f;
+
+        if (distanceToGhost <= minDist) return 1.0f;
+        if (distanceToGhost >= maxDist) return maxMultiplier;
+        float t = (distanceToGhost - minDist) / (maxDist - minDist);
+        return Mathf.Lerp(1.0f, maxMultiplier, t);
+    }
+
     private void UpdateDebugUI()
     {
         if (debugTextPanel == null) return;
 
-        // Toggle visibility
         debugTextPanel.gameObject.SetActive(showDebugUI);
         if (!showDebugUI) return;
 
@@ -121,11 +155,10 @@ public class AIDirectorBlackboard : MonoBehaviour
         string linternaStatus = isFlashlightOn ? "<color=yellow>Encendida</color>" : "<color=#888888>Apagada</color>";
         string estancamientoTexto = timeStuck > campTimerThreshold ? $"<color=#FF4444>{timeStuck:F1}s (Camp!)</color>" : $"{timeStuck:F1}s";
         string ageColor = soundAge < 3f ? "#FF4500" : (soundAge < 7f ? "#FFFF00" : "#888888");
-
-        // Color del radio para ver gráficamente la asfixia
         string radioColor = currentPatrolRadius < 12f ? "#FF0000" : (currentPatrolRadius < 18f ? "#FFFF00" : "#00FF00");
 
         string directorStatus = isDirectorActive ? "<color=#00FF00>ACTIVO (Dinámico)</color>" : "<color=#FF0000>INACTIVO (Estático)</color>";
+        string tpReadyColor = tpIsReadyToJump ? "#00FF00" : "#FF4500";
 
         debugTextPanel.text =
             $"<align=center><b><color=#FFD700>SISTEMA IA DIRECTOR</color></b></align>\n" +
@@ -144,10 +177,13 @@ public class AIDirectorBlackboard : MonoBehaviour
             $"  Audición: {hearingStatus}\n\n" +
 
             $"<b><color=#00BFFF>> TÁCTICA & NAVEGACIÓN</color></b>\n" +
-            $"  Último Ruido: {lastSoundPosition}\n" +
-            $"  Edad Pista: <color={ageColor}>{soundAge:F1}s</color>\n" +
-            $"  Distancia Real: {distanceToGhost:F1}m\n" +
+            $"  Distancia Lineal: {distanceToGhost:F1}m\n" +
             $"  Radio Máximo (Tether): <b><color={radioColor}>{currentPatrolRadius:F1}m</color></b>\n" +
-            $"  Destino NavMesh: {currentGhostDestination}";
+            $"  Destino NavMesh: {currentGhostDestination}\n\n" +
+
+            $"<b><color=#FF8C00>> SISTEMA DE TELETRANSPORTE (TP)</color></b>\n" +
+            $"  Gatillo [{tpConditionLabel}]: <color={tpReadyColor}><b>{tpConditionValue}</b></color>\n" +
+            $"  Filtro Distancia: {tpDistanceStatus}\n" +
+            $"  Último Evento: <i><color=#F0E68C>{tpLastEvent}</color></i>";
     }
 }

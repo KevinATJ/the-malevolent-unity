@@ -25,14 +25,14 @@ public class AIIdleState : AIState
         }
         else if (!playerGameobject)
         {
-            FindPlayer(agent);
+            //FindPlayer(agent);
         }
     }
     public void Exit(AIAgent agent)
     {
 
     }
-    GameObject FindPlayer(AIAgent agent)
+   /* GameObject FindPlayer(AIAgent agent)
     {
         if (agent.sensor.objects.Count > 0)
         {
@@ -43,5 +43,5 @@ public class AIIdleState : AIState
             }
         }
         return null;
-    }
+    }*/
 }

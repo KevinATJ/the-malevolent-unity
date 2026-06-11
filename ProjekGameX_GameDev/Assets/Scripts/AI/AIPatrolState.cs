@@ -31,7 +31,7 @@ public class AIPatrolState : AIState
         }
         if (!playerGameobject)
         {
-            playerGameobject = FindPlayer(agent);
+           // playerGameobject = FindPlayer(agent);
         }
 
     }
@@ -53,7 +53,7 @@ public class AIPatrolState : AIState
         return false;
     }
 
-    GameObject FindPlayer(AIAgent agent)
+    /*GameObject FindPlayer(AIAgent agent)
     {
         if (agent.sensor.objects.Count > 0)
         {
@@ -63,5 +63,5 @@ public class AIPatrolState : AIState
             }
         }
         return null;
-    }
+    }*/
 }

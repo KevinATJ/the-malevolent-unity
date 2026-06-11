@@ -38,7 +38,7 @@ public class MainMenu : MonoBehaviour
 
     public void OnEndlessModeButtonClick()
     {
-        // Load EndlessMode scene
+
         SceneManager.LoadScene("EndlessMode");
     }
 

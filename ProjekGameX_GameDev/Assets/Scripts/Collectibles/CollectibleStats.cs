@@ -47,6 +47,7 @@ public class CollectibleStats : MonoBehaviour
         if (AIDirectorBlackboard.Instance != null)
         {
             AIDirectorBlackboard.Instance.remainingObjectives = collectibleExist.Count;
+            AIDirectorBlackboard.Instance.objectsPickedSinceLastTP++;
 
             int totalObjects = collectibleExist.Count + collectedCollectible;
             if (totalObjects > 0)

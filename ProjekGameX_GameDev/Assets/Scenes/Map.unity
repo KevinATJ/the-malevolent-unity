@@ -14835,7 +14835,7 @@ MonoBehaviour:
   maxStamina: 100
   hasRegenerated: 1
   isSprinting: 0
-  staminaDrain: 12
+  staminaDrain: 10
   staminaRegen: 30
   staminaProgressUI: {fileID: 1460138728}
   sliderCanvasGroup: {fileID: 549384460}
@@ -14857,8 +14857,8 @@ MonoBehaviour:
   cameraHolder: {fileID: 1087006162}
   state: 0
   gravity: -60
-  walkSpeed: 6
-  runSpeed: 10
+  walkSpeed: 5
+  runSpeed: 11
   crouchWalkSpeed: 3
   jumpHeight: 1
   runButtonPressed: 0
@@ -18950,6 +18950,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 617dc1ac2c2bfbd4fa2ddbd408143f89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDirectorActive: 1
+  showDebugUI: 1
+  currentGhostState: 0
   campTimerThreshold: 15
   tensionLevel: 0
   playerMovementState: Idle
@@ -18971,6 +18974,15 @@ MonoBehaviour:
   aggressionLevel: 0
   remainingObjectives: 0
   currentPriorityZone: {x: 0, y: 0, z: 0}
+  objectsPickedSinceLastTP: 0
+  targetObjectsForNextTP: 2
+  currentPatrolRadius: 25
+  currentGhostDestination: {x: 0, y: 0, z: 0}
+  tpConditionLabel: "Condici\xF3n"
+  tpConditionValue: 0/0
+  tpDistanceStatus: Esperando...
+  tpLastEvent: Ninguno
+  tpIsReadyToJump: 0
   debugTextPanel: {fileID: 1773143561}
 --- !u!4 &498480468
 Transform:
@@ -29968,7 +29980,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &689722772
 RectTransform:
   m_ObjectHideFlags: 0
@@ -30396,7 +30408,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &703851935
 Transform:
   m_ObjectHideFlags: 0
@@ -43492,8 +43504,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebfd5f18b425e2144a7cde2c6a88237f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  distance: 18
-  angle: 85.1
+  focalDistance: 15
+  focalAngle: 15
+  peripheralDistance: 5
+  peripheralAngle: 45
   height: 4.06
   meshColor: {r: 1, g: 0.9527312, b: 0, a: 0.1764706}
   scanFrequency: 50
@@ -43644,11 +43658,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6de1b084958a6f94bb2c25d3da0cd6cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerTransform: {fileID: 304039001}
-  anim: {fileID: 823119265}
-  audioSource: {fileID: 0}
-  jumpscareClip: {fileID: 0}
-  chaseClip: {fileID: 0}
 --- !u!1 &824314147
 GameObject:
   m_ObjectHideFlags: 0
@@ -66403,7 +66412,7 @@ RectTransform:
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -84116,7 +84125,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1685787278
 RectTransform:
   m_ObjectHideFlags: 0
@@ -93224,7 +93233,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1845611467
 Transform:
   m_ObjectHideFlags: 0

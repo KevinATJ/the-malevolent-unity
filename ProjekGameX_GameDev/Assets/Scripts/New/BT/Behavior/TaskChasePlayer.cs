@@ -15,9 +15,11 @@ namespace AI.BehaviorTree
 
         public override NodeState Evaluate()
         {
-
-            if (_ai.BGMSource.clip != _ai.chaseBGM)
+            // Control de Estado Lógico
+            if (AIDirectorBlackboard.Instance.currentGhostState != GhostState.Chasing)
             {
+                AIDirectorBlackboard.Instance.currentGhostState = GhostState.Chasing;
+
                 if (_ai.ghostVoice != null) _ai.ghostVoice.Stop();
                 if (_ai.sfxSound != null && _ai.horrorStinger != null) _ai.sfxSound.PlayOneShot(_ai.horrorStinger);
                 if (_ai.ghostVoice != null && _ai.Angry != null) _ai.ghostVoice.PlayOneShot(_ai.Angry);
@@ -25,13 +27,13 @@ namespace AI.BehaviorTree
                 if (_ai.BGMSource != null)
                 {
                     _ai.BGMSource.clip = _ai.chaseBGM;
+                    _ai.BGMSource.loop = true;
                     _ai.BGMSource.Play();
                 }
 
                 if (_ai.AiIK != null) _ai.AiIK.SetTargetTransform(_ai.playerTransform);
                 if (_ai.deadCollider != null) _ai.deadCollider.SetActive(true);
             }
-
 
             _ai.navMeshAgent.isStopped = false;
 
