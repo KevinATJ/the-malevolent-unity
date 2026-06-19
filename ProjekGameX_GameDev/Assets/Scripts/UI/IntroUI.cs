@@ -10,8 +10,9 @@ public class IntroUI : MonoBehaviour
     [HideInInspector] public bool introPanelIsActive;
     void Start()
     {
-        pauseMenu.isPaused = true;
-        introPanelIsActive = true;
+        //pauseMenu.isPaused = true;
+        //introPanelIsActive = true;
+        IntroUIStartGame();
     }
 
     public void IntroUIStartGame()

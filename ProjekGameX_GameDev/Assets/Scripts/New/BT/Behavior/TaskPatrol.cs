@@ -12,6 +12,11 @@ namespace AI.BehaviorTree
 
         private float _radioMinimo = 8f;
         private float _radioMaximoBase = 25f;
+        private float _globalPatrolRadius = 40f;
+
+        private float _lowTensionTimer = 0f;
+        private float _lowTensionThreshold = 30f;
+        private float _timeToTriggerStalking = 10f;
 
         public TaskPatrol(AIAgent ai)
         {
@@ -25,7 +30,6 @@ namespace AI.BehaviorTree
 
         public override NodeState Evaluate()
         {
-            // Control de Estado Lógico
             if (AIDirectorBlackboard.Instance.currentGhostState != GhostState.Patrolling)
             {
                 AIDirectorBlackboard.Instance.currentGhostState = GhostState.Patrolling;
@@ -42,6 +46,27 @@ namespace AI.BehaviorTree
                 {
                     _ai.BGMSource.Stop();
                 }
+
+                if (_ai.ghostVoice != null && _ai.humming != null)
+                {
+                    _ai.ghostVoice.clip = _ai.humming;
+                    _ai.ghostVoice.loop = true;
+                    _ai.ghostVoice.Play();
+                }
+            }
+
+            if (AIDirectorBlackboard.Instance != null)
+            {
+                if (AIDirectorBlackboard.Instance.tensionLevel <= _lowTensionThreshold)
+                {
+                    _lowTensionTimer += Time.deltaTime;
+                }
+                else
+                {
+                    _lowTensionTimer = 0f;
+                }
+
+                AIDirectorBlackboard.Instance.lowTensionTimerDebug = _lowTensionTimer;
             }
 
             bool hayRuidoFresco = AIDirectorBlackboard.Instance != null &&
@@ -82,21 +107,28 @@ namespace AI.BehaviorTree
                 {
                     if (_playerTransform != null)
                     {
-                        float radioMaximoActual = _radioMaximoBase;
                         float multiplicadorVelocidad = 1.0f;
+                        Vector3 nuevoDestino = _ai.transform.position;
 
                         if (AIDirectorBlackboard.Instance != null)
                         {
-                            if (AIDirectorBlackboard.Instance.isDirectorActive)
-                            {
-                                float tension = AIDirectorBlackboard.Instance.tensionLevel;
-                                radioMaximoActual = Mathf.Lerp(10f, _radioMaximoBase, tension / 100f);
-                            }
-
+                            float tension = AIDirectorBlackboard.Instance.tensionLevel;
                             multiplicadorVelocidad = AIDirectorBlackboard.Instance.GetDistanceSpeedMultiplier();
-                        }
 
-                        Vector3 nuevoDestino = ObtenerPuntoEnCascaron(_playerTransform.position, _radioMinimo, radioMaximoActual);
+                            if (_lowTensionTimer >= _timeToTriggerStalking)
+                            {
+                                float radioMaximoActual = Mathf.Lerp(10f, _radioMaximoBase, tension / _lowTensionThreshold);
+                                nuevoDestino = ObtenerPuntoEnCascaron(_playerTransform.position, _radioMinimo, radioMaximoActual);
+                                AIDirectorBlackboard.Instance.currentPatrolRadius = radioMaximoActual;
+                                AIDirectorBlackboard.Instance.patrolModeDebug = "Stalking (Acorralando)";
+                            }
+                            else
+                            {
+                                nuevoDestino = ObtenerPuntoEnCascaron(_ai.transform.position, 5f, _globalPatrolRadius);
+                                AIDirectorBlackboard.Instance.currentPatrolRadius = _globalPatrolRadius;
+                                AIDirectorBlackboard.Instance.patrolModeDebug = "Roaming Global";
+                            }
+                        }
 
                         _ai.navMeshAgent.isStopped = false;
                         _ai.navMeshAgent.speed = baseWalkSpeed * multiplicadorVelocidad;
@@ -106,7 +138,6 @@ namespace AI.BehaviorTree
 
                         if (AIDirectorBlackboard.Instance != null)
                         {
-                            AIDirectorBlackboard.Instance.currentPatrolRadius = radioMaximoActual;
                             AIDirectorBlackboard.Instance.currentGhostDestination = nuevoDestino;
                         }
                     }
@@ -117,11 +148,11 @@ namespace AI.BehaviorTree
             return state;
         }
 
-        private Vector3 ObtenerPuntoEnCascaron(Vector3 centroJugador, float minRadius, float maxRadius)
+        private Vector3 ObtenerPuntoEnCascaron(Vector3 centro, float minRadius, float maxRadius)
         {
             Vector2 direccionAleatoria = Random.insideUnitCircle.normalized;
             float distanciaAleatoria = Random.Range(minRadius, maxRadius);
-            Vector3 puntoTeorico = centroJugador + new Vector3(direccionAleatoria.x, 0, direccionAleatoria.y) * distanciaAleatoria;
+            Vector3 puntoTeorico = centro + new Vector3(direccionAleatoria.x, 0, direccionAleatoria.y) * distanciaAleatoria;
 
             NavMeshHit hit;
             if (NavMesh.SamplePosition(puntoTeorico, out hit, maxRadius, NavMesh.AllAreas))
@@ -129,7 +160,7 @@ namespace AI.BehaviorTree
                 return hit.position;
             }
 
-            return centroJugador;
+            return centro;
         }
     }
 }

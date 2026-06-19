@@ -6,7 +6,7 @@ using UnityEngine.AI;
 [ExecuteInEditMode]
 public class AISensor : MonoBehaviour
 {
-    public float focalDistance = 15f;
+    public float focalDistance = 10f;
     public float focalAngle = 15f;
     public float peripheralDistance = 5f;
     public float peripheralAngle = 45f;

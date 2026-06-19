@@ -8,7 +8,7 @@ public class AIDirectorBlackboard : MonoBehaviour
     public static AIDirectorBlackboard Instance;
 
     [Header("Director Global Settings")]
-    public bool isDirectorActive = true;
+    public bool dynamicTensionEnabled = true;
     public bool showDebugUI = true;
 
     [Header("Ghost Logic State")]
@@ -57,6 +57,9 @@ public class AIDirectorBlackboard : MonoBehaviour
     public float currentPatrolRadius = 25f;
     public Vector3 currentGhostDestination = Vector3.zero;
 
+    [HideInInspector] public float lowTensionTimerDebug = 0f;
+    [HideInInspector] public string patrolModeDebug = "Roaming Global";
+
     [HideInInspector] public string tpConditionLabel = "Condición";
     [HideInInspector] public string tpConditionValue = "0/0";
     [HideInInspector] public string tpDistanceStatus = "Esperando...";
@@ -75,12 +78,17 @@ public class AIDirectorBlackboard : MonoBehaviour
     private void Start()
     {
         targetObjectsForNextTP = Random.Range(1, 4);
-        isDirectorActive = (Random.value > 0.5f);
-        Debug.Log(">>> MODO A/B TESTING ASIGNADO AL AZAR: " + (isDirectorActive ? "DINÁMICO" : "ESTÁTICO"));
+        dynamicTensionEnabled = (Random.value > 0.5f);
+        Debug.Log(">>> MODO A/B TESTING ASIGNADO AL AZAR: " + (dynamicTensionEnabled ? "TENSIÓN DINÁMICA" : "TENSIÓN FIJA (50%)"));
     }
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            showDebugUI = !showDebugUI;
+        }
+
         UpdateSoundAge();
         CalculateTension();
         UpdateDebugUI();
@@ -96,6 +104,12 @@ public class AIDirectorBlackboard : MonoBehaviour
 
     private void CalculateTension()
     {
+        if (!dynamicTensionEnabled)
+        {
+            tensionLevel = 50f;
+            return;
+        }
+
         float targetTension = 0f;
 
         if (ghostSeesPlayer)
@@ -129,7 +143,7 @@ public class AIDirectorBlackboard : MonoBehaviour
 
     public float GetDistanceSpeedMultiplier()
     {
-        if (!isDirectorActive) return 1.0f;
+        if (!dynamicTensionEnabled) return 1.0f;
 
         float minDist = 20f;
         float maxDist = 40f;
@@ -154,15 +168,19 @@ public class AIDirectorBlackboard : MonoBehaviour
         string hearingStatus = ghostHearsPlayer ? "<b><color=#FF4444>>> ¡OYO RUIDO! <<</color></b>" : "<color=#888888>Silencio</color>";
         string linternaStatus = isFlashlightOn ? "<color=yellow>Encendida</color>" : "<color=#888888>Apagada</color>";
         string estancamientoTexto = timeStuck > campTimerThreshold ? $"<color=#FF4444>{timeStuck:F1}s (Camp!)</color>" : $"{timeStuck:F1}s";
-        string ageColor = soundAge < 3f ? "#FF4500" : (soundAge < 7f ? "#FFFF00" : "#888888");
         string radioColor = currentPatrolRadius < 12f ? "#FF0000" : (currentPatrolRadius < 18f ? "#FFFF00" : "#00FF00");
 
-        string directorStatus = isDirectorActive ? "<color=#00FF00>ACTIVO (Dinámico)</color>" : "<color=#FF0000>INACTIVO (Estático)</color>";
+        string directorStatus = dynamicTensionEnabled ? "<color=#00FF00>ACTIVO (Dinámico)</color>" : "<color=#FF0000>FIJO (Estático)</color>";
         string tpReadyColor = tpIsReadyToJump ? "#00FF00" : "#FF4500";
+
+        string ghostStateText = currentGhostState.ToString().ToUpper();
+        string stateColor = currentGhostState == GhostState.Chasing ? "#FF0000" : (currentGhostState == GhostState.Killing ? "#8B0000" : "#00FFFF");
+
+        string patrolModeDisplay = $"{patrolModeDebug} (Timer: {lowTensionTimerDebug:F1}s)";
 
         debugTextPanel.text =
             $"<align=center><b><color=#FFD700>SISTEMA IA DIRECTOR</color></b></align>\n" +
-            $"<align=center><i>Estado: {directorStatus}</i></align>\n\n" +
+            $"<align=center><i>Modo: {directorStatus} | IA: <color={stateColor}>{ghostStateText}</color></i></align>\n\n" +
 
             $"<b>Tensión:</b> <color={tensionColor}>{tensionLevel:F0}%</color> | <b>Agresividad:</b> <color={aggroColor}>{aggressionLevel:F0}%</color>\n" +
             $"<b>Objetos Restantes:</b> {remainingObjectives}\n\n" +
@@ -177,6 +195,7 @@ public class AIDirectorBlackboard : MonoBehaviour
             $"  Audición: {hearingStatus}\n\n" +
 
             $"<b><color=#00BFFF>> TÁCTICA & NAVEGACIÓN</color></b>\n" +
+            $"  Estrategia: <i>{patrolModeDisplay}</i>\n" +
             $"  Distancia Lineal: {distanceToGhost:F1}m\n" +
             $"  Radio Máximo (Tether): <b><color={radioColor}>{currentPatrolRadius:F1}m</color></b>\n" +
             $"  Destino NavMesh: {currentGhostDestination}\n\n" +

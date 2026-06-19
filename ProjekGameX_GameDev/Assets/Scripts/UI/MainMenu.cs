@@ -39,7 +39,7 @@ public class MainMenu : MonoBehaviour
     public void OnEndlessModeButtonClick()
     {
 
-        SceneManager.LoadScene("EndlessMode");
+        SceneManager.LoadScene("Map");
     }
 
 }

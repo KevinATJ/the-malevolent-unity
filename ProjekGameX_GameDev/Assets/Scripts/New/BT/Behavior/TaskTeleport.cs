@@ -8,6 +8,7 @@ namespace AI.BehaviorTree
         private AIAgent _ai;
         private Transform _playerTransform;
         private Camera _mainCamera;
+        private LayerMask _occlusionLayers;
 
         private float _staticTimer = 0f;
         private float _staticCooldown = 40f;
@@ -20,6 +21,7 @@ namespace AI.BehaviorTree
             _ai = ai;
             _playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
             _mainCamera = Camera.main;
+            _occlusionLayers = LayerMask.GetMask("Default", "Obstacle");
         }
 
         public override NodeState Evaluate()
@@ -36,7 +38,7 @@ namespace AI.BehaviorTree
                 return NodeState.FAILURE;
             }
 
-            if (AIDirectorBlackboard.Instance.isDirectorActive)
+            if (AIDirectorBlackboard.Instance.dynamicTensionEnabled)
             {
                 return ExecuteDynamicTP();
             }
@@ -67,7 +69,7 @@ namespace AI.BehaviorTree
                         _ai.navMeshAgent.Warp(puntoSeguro);
                         _staticTimer = 0f;
                         db.tpLastEvent = $"TP Fuerza Bruta ({direccionElegida}) - {Time.time:F1}s";
-                        return NodeState.SUCCESS; // Detiene la evaluación del árbol este frame
+                        return NodeState.SUCCESS;
                     }
                 }
                 else
@@ -106,7 +108,7 @@ namespace AI.BehaviorTree
                         db.objectsPickedSinceLastTP = 0;
                         db.targetObjectsForNextTP = Random.Range(1, 4);
                         db.tpLastEvent = $"Emboscada ({direccionElegida}) - {Time.time:F1}s";
-                        return NodeState.SUCCESS; // Detiene la evaluación del árbol este frame
+                        return NodeState.SUCCESS;
                     }
                     else
                     {
@@ -126,7 +128,6 @@ namespace AI.BehaviorTree
             return NodeState.FAILURE;
         }
 
-
         private bool TryBuscarPuntoOculto(out Vector3 resultado, out string nombreDireccion)
         {
             bool prefiereAdelante = Random.value > 0.5f;
@@ -143,7 +144,7 @@ namespace AI.BehaviorTree
 
             for (int i = 0; i < direccionesAProbar.Length; i++)
             {
-                if (TryCalcularPuntoSeguro(_playerTransform.position, direccionesAProbar[i], 25f, out Vector3 puntoEvaluado))
+                if (TryCalcularPuntoSeguro(_playerTransform.position, direccionesAProbar[i], 30f, out Vector3 puntoEvaluado))
                 {
                     if (!EsVisibleParaElJugador(puntoEvaluado))
                     {
@@ -174,7 +175,7 @@ namespace AI.BehaviorTree
 
             if (NavMesh.SamplePosition(destinoTeorico, out NavMeshHit navHit, 2.0f, NavMesh.AllAreas))
             {
-                if (Vector3.Distance(origen, navHit.position) > 15f)
+                if (Vector3.Distance(origen, navHit.position) > 20f)
                 {
                     resultado = navHit.position;
                     return true;
@@ -187,7 +188,21 @@ namespace AI.BehaviorTree
         private bool EsVisibleParaElJugador(Vector3 punto)
         {
             Vector3 viewportPoint = _mainCamera.WorldToViewportPoint(punto);
-            return viewportPoint.z > 0 && viewportPoint.x > -0.4f && viewportPoint.x < 1.4f && viewportPoint.y > -0.4f && viewportPoint.y < 1.4f;
+
+            if (viewportPoint.z > 0 && viewportPoint.x > -0.4f && viewportPoint.x < 1.4f && viewportPoint.y > -0.4f && viewportPoint.y < 1.4f)
+            {
+                Vector3 camPos = _mainCamera.transform.position;
+                Vector3 direccionHaciaPunto = punto - camPos;
+                float distancia = direccionHaciaPunto.magnitude;
+
+                if (Physics.Raycast(camPos, direccionHaciaPunto, distancia, _occlusionLayers, QueryTriggerInteraction.Ignore))
+                {
+                    return false;
+                }
+                return true;
+            }
+
+            return false;
         }
 
         private float CalcularDistanciaRuta(Vector3 inicio, Vector3 fin)
