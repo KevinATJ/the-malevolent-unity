@@ -15,16 +15,26 @@ namespace AI.BehaviorTree
 
         public override NodeState Evaluate()
         {
-            // Control de Estado Lógico
             if (AIDirectorBlackboard.Instance.currentGhostState != GhostState.Chasing)
             {
                 AIDirectorBlackboard.Instance.currentGhostState = GhostState.Chasing;
 
                 if (_ai.ghostVoice != null) _ai.ghostVoice.Stop();
-                if (_ai.sfxSound != null && _ai.horrorStinger != null) _ai.sfxSound.PlayOneShot(_ai.horrorStinger);
-                if (_ai.ghostVoice != null && _ai.Angry != null) _ai.ghostVoice.PlayOneShot(_ai.Angry);
 
-                if (_ai.BGMSource != null)
+                if (_ai.playChaseStinger && _ai.sfxSound != null && _ai.horrorStinger != null)
+                {
+                    _ai.sfxSound.PlayOneShot(_ai.horrorStinger);
+                }
+
+                if (_ai.playChaseVoice && _ai.ghostVoice != null && _ai.Angry != null)
+                {
+                    if (!_ai.ghostVoice.isPlaying)
+                    {
+                        _ai.ghostVoice.PlayOneShot(_ai.Angry);
+                    }
+                }
+
+                if (_ai.playChaseBGM && _ai.BGMSource != null)
                 {
                     _ai.BGMSource.clip = _ai.chaseBGM;
                     _ai.BGMSource.loop = true;

@@ -11,6 +11,10 @@ public class AIDirectorBlackboard : MonoBehaviour
     public bool dynamicTensionEnabled = true;
     public bool showDebugUI = true;
 
+    [Header("Testing Settings")]
+    [Tooltip("If true, only the session code is shown on the UI, hiding all debug info.")]
+    public bool isTestMode = false;
+
     [Header("Ghost Logic State")]
     public GhostState currentGhostState = GhostState.Patrolling;
 
@@ -69,22 +73,47 @@ public class AIDirectorBlackboard : MonoBehaviour
     [Header("Debug UI")]
     public TextMeshProUGUI debugTextPanel;
 
+    [Header("Session Tracking")]
+    public string sessionCode = "";
+
+    private static bool _isSessionInitialized = false;
+    private static bool _staticDynamicMode;
+    private static string _staticSessionID;
+
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+
+        if (!_isSessionInitialized)
+        {
+            _staticDynamicMode = (Random.value > 0.5f);
+
+            string randomID = System.Guid.NewGuid().ToString().Substring(0, 4).ToUpper();
+            string prefix = _staticDynamicMode ? "X1" : "Y2";
+            _staticSessionID = $"{prefix}-{randomID}";
+
+            _isSessionInitialized = true;
+        }
+
+        dynamicTensionEnabled = _staticDynamicMode;
+        sessionCode = _staticSessionID;
     }
 
     private void Start()
     {
         targetObjectsForNextTP = Random.Range(1, 4);
-        dynamicTensionEnabled = (Random.value > 0.5f);
-        Debug.Log(">>> MODO A/B TESTING ASIGNADO AL AZAR: " + (dynamicTensionEnabled ? "TENSIÓN DINÁMICA" : "TENSIÓN FIJA (50%)"));
+        Debug.Log($">>> SESIÓN INICIADA: {sessionCode} | Modo Dinámico: {dynamicTensionEnabled}");
+    }
+
+    public static void ResetSession()
+    {
+        _isSessionInitialized = false;
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Tab))
+        if (!isTestMode && Input.GetKeyDown(KeyCode.Tab))
         {
             showDebugUI = !showDebugUI;
         }
@@ -159,6 +188,13 @@ public class AIDirectorBlackboard : MonoBehaviour
     {
         if (debugTextPanel == null) return;
 
+        if (isTestMode)
+        {
+            debugTextPanel.gameObject.SetActive(true);
+            debugTextPanel.text = $"<align=right><b><color=#FFFFFF>{sessionCode}</color></b></align>";
+            return;
+        }
+
         debugTextPanel.gameObject.SetActive(showDebugUI);
         if (!showDebugUI) return;
 
@@ -203,6 +239,7 @@ public class AIDirectorBlackboard : MonoBehaviour
             $"<b><color=#FF8C00>> SISTEMA DE TELETRANSPORTE (TP)</color></b>\n" +
             $"  Gatillo [{tpConditionLabel}]: <color={tpReadyColor}><b>{tpConditionValue}</b></color>\n" +
             $"  Filtro Distancia: {tpDistanceStatus}\n" +
-            $"  Último Evento: <i><color=#F0E68C>{tpLastEvent}</color></i>";
+            $"  Último Evento: <i><color=#F0E68C>{tpLastEvent}</color></i>\n\n" +
+            $"<align=center><b><color=#FFFFFF>CÓDIGO DE SESIÓN: {sessionCode}</color></b></align>";
     }
 }

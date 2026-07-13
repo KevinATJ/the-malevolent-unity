@@ -17,6 +17,19 @@ public class AISensor : MonoBehaviour
     public LayerMask occlusionLayers;
     public bool ghostHearsPlayer = false;
 
+    [Header("Audio Feedback 2D (Para el Jugador)")]
+    [Tooltip("Asigna un AudioSource 2D (Spatial Blend = 0) que esté en este mismo objeto")]
+    public AudioSource feedbackAudioSource;
+
+    [Tooltip("Añade aquí las variantes del sonido de alerta (ej. 3 clips distintos)")]
+    public AudioClip[] onHearStartClips;
+
+    [Tooltip("Tiempo de gracia EXTRA en segundos, además del 3x la duración del clip")]
+    public float baseAudioCooldown = 1f;
+
+    private bool _wasHearingPlayer = false;
+    private float _nextAllowedSoundTime = -10f;
+
     public List<GameObject> objects
     {
         get
@@ -110,6 +123,38 @@ public class AISensor : MonoBehaviour
         }
 
         this.ghostHearsPlayer = escuchoAlJugador;
+
+        ProcessAudioFeedback(escuchoAlJugador);
+    }
+
+    private void ProcessAudioFeedback(bool currentlyHearing)
+    {
+        if (feedbackAudioSource == null || onHearStartClips == null || onHearStartClips.Length == 0) return;
+
+        if (AIDirectorBlackboard.Instance != null && AIDirectorBlackboard.Instance.currentGhostState == GhostState.Chasing)
+        {
+            _wasHearingPlayer = currentlyHearing;
+            return;
+        }
+
+        if (currentlyHearing && !_wasHearingPlayer)
+        {
+            if (Time.time >= _nextAllowedSoundTime)
+            {
+                int randomIndex = Random.Range(0, onHearStartClips.Length);
+                AudioClip clipToPlay = onHearStartClips[randomIndex];
+
+                if (clipToPlay != null)
+                {
+                    feedbackAudioSource.PlayOneShot(clipToPlay);
+
+                    float dynamicCooldown = (clipToPlay.length * 3f) + baseAudioCooldown;
+                    _nextAllowedSoundTime = Time.time + dynamicCooldown;
+                }
+            }
+        }
+
+        _wasHearingPlayer = currentlyHearing;
     }
 
     public bool IsHeard(GameObject obj, float distanciaLineal, float radioRuidoJugador)

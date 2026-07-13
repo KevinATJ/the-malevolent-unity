@@ -38,8 +38,9 @@ public class MainMenu : MonoBehaviour
 
     public void OnEndlessModeButtonClick()
     {
-
+        AIDirectorBlackboard.ResetSession();
         SceneManager.LoadScene("Map");
+
     }
 
 }

@@ -5,7 +5,6 @@ using UnityEngine.AI;
 
 public class AIAgent : MonoBehaviour
 {
-
     [Header("AI Agent")]
     public AIStateMachine stateMachine;
     public AiStateID initialState;
@@ -33,6 +32,15 @@ public class AIAgent : MonoBehaviour
     [Header("Animation")]
     public Animator animator;
 
+    [Header("Chase Audio Toggles")]
+    [Tooltip("¿Reproducir el golpe musical agudo al descubrirte?")]
+    public bool playChaseStinger = true;
+
+    [Tooltip("¿El fantasma debe gritar cuando te ve?")]
+    public bool playChaseVoice = true;
+
+    [Tooltip("¿Cambiar la música de fondo a la pista de persecución?")]
+    public bool playChaseBGM = true;
 
     // Start is called before the first frame update
     void Start()
@@ -49,9 +57,10 @@ public class AIAgent : MonoBehaviour
         stateMachine.ChangeState(initialState);
     }
 
-    // Update is called once per frame
     void Update()
     {
         //stateMachine.Update();
     }
+
+
 }

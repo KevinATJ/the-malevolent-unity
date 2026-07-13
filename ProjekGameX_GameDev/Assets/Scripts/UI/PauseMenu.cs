@@ -66,9 +66,17 @@ public class PauseMenu : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         DOTween.Clear(true);
     }
+    public void AbrirCuestionarioGoogle()
+    {
+        string linkForms = "https://docs.google.com/forms/d/e/1FAIpQLSdEOHPEWi7yWnL7uwmSoDVN-AtD1OnuIc_S60mMSQWtJJiLPQ/viewform?usp=publish-editor";
+        Application.OpenURL(linkForms);
+    }
+
     public void BacktoMainMenu()
     {
         SetActivePause();
+        AIDirectorBlackboard.ResetSession();
+
         levelLoader.LoadMainMenu();
     }
     private void Update()
