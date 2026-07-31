@@ -1,12 +1,14 @@
 # The Malevolent
 ## A Game by **PogChamp Studio**
 
-**Team Member:**
-    
+**Original Team Members:**
     Erick Yudha Pratama Sukku (201401046) - Programmer (Game Mechanic)
     M. Syah Al Fikri (201401056) - Lead Programmer & Team Leader
     Nico (201401059) - UI/UX Designer & Programmer
     Ariyan Satya Sikoko (201401079) - Lead Designer
+
+**Dynamic AI Research & Implementation:**
+    Kevin Troncoso - AI Programmer / Researcher
 
 <div>
     <img src="https://blog.cdn.own3d.tv/resize=fit:crop,height:400,width:600/pKwIyI8RyGtPW35ZFg2m" height="100px">
@@ -31,5 +33,7 @@ Story Mode: In Story Mode,player have to follow a specific storyline where playe
 - First Person Gameplay (Survival Horror): Player mengumpulkan item di dalam game sambil menghindari hantu. Basic movement seperti walking, running, crouching, dan juga stamina sistem tersedia. Player juga diberikan sebuah senter untuk menavigasi map yang gelap.
 - Sanity System: Semakin lama player berada di tempat gelap semakin menurun sanity player itu. Ketika sanity turun melewati threshold tertentu efek audio dan visual muncul menandakan kewarasan karakter player yang semakin terganggu. Player bisa memulihkan sanity dengan menatap sumber cahaya, hati-hati karena ketika sanity mencapai nol, game over untuk player.
 - Randomly Spawned Collectibles: Item collectible akan muncul di lokasi yang berbeda secara random di setiap playtrough.
-- Ghost AI: Terdapat ghost AI yang akan menjadi halangan utama player dalam mencapai goal dari permainan. AI ini akan patroli di map dan dapat mendeteksi player bila terlihat. Saat player terlihat, AI ini akan mengejar player dan bila tertangkap, Akan mengakibatkan Jumpscare dan game over instan.
+- Ghost AI (Original): Terdapat ghost AI yang akan menjadi halangan utama player dalam mencapai goal dari permainan. AI ini akan patroli di map dan dapat mendeteksi player bila terlihat. Saat player terlihat, AI ini akan mengejar player dan bila tertangkap, Akan mengakibatkan Jumpscare dan game over instan.
 - 2 Game Mode (Story & Endless Mode)
+- **Dynamic Ghost AI (Research Fork):** An Dynamic Artificial Intelligence system replacing the static behavior. It features an **AI Director** that calculates the player's tension in real-time based on distance, line of sight, and player noise. The ghost uses a **Behavior Tree** to dynamically adapt its actions, featuring adaptive patrolling (closing in when tension is low), anti-camping mechanics to prevent hiding in one spot forever, and teleportation/rubber-banding to keep the threat constantly active and immersive.
+
